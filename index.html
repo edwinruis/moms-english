@@ -85,6 +85,9 @@
   .divider-label::after { right: 0; }
   .repeat-btn { font-size: 14px; padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; color: var(--text-mid); cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: all 0.15s; }
   .repeat-btn:hover { background: var(--navy-pale); border-color: var(--navy); color: var(--navy); }
+  .help-btn { width: 100%; max-width: 340px; margin: 10px auto 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; font-size: 16px; font-weight: 600; font-family: 'Source Sans 3', sans-serif; border-radius: var(--radius-lg); border: 2px solid var(--accent); background: var(--accent-bg, #fdf3e7); color: var(--accent); cursor: pointer; transition: all 0.18s ease; }
+  .help-btn:hover { background: var(--accent); color: white; }
+  .help-btn:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
@@ -144,7 +147,10 @@
       </div>
       <button class="repeat-btn" id="repeat-btn" onclick="repeatLast()" style="display:none;">🔊 Repeat<br>Repetir</button>
     </div>
-    <div class="divider-label">or type / o escribe</div>
+    <div style="display:flex; justify-content:center; margin-top: 10px;">
+      <button class="help-btn" onclick="askForHelp()">🆘 Ayúdame / Help me</button>
+    </div>
+    <div class="divider-label" style="margin-top:12px;">or type / o escribe</div>
     <div class="text-fallback">
       <input class="text-input" id="text-input" type="text" placeholder="Write in English... / Escribe en inglés..." onkeydown="if(event.key==='Enter') sendText()">
       <button class="send-btn" onclick="sendText()">Send</button>
@@ -327,6 +333,26 @@ Respond ONLY as a valid JSON object, no markdown, no extra text:
   }
 
   function repeatLast() { if (lastAiText) speak(lastAiText); }
+
+  async function askForHelp() {
+    synth.cancel();
+    addBubble('user', '🆘 Ayúdame / Help me', null);
+    setStatus('Preparando ayuda en español...');
+    showThinking();
+    const helpMessage = {
+      role: 'user',
+      content: 'I am stuck and do not understand. Please help me in Spanish. Explain what you just asked me in simple Spanish, then show me a simple example answer in English, and invite me to try again. Be warm and encouraging.'
+    };
+    const messages = [...history, helpMessage];
+    const response = await callClaude(messages);
+    removeThinking();
+    if (response) {
+      addBubble('ai', response.english, response.spanish_note);
+      speak(response.english);
+      lastAiText = response.english;
+      setStatus('Presiona el micrófono y habla en inglés.');
+    }
+  }
 
   function addBubble(role, text, note) {
     const wrap = document.getElementById('bubbles');
